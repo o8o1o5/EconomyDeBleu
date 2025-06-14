@@ -6,38 +6,37 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class EconomyDeBleuEconomy extends AbstractEconomy {
     private final EconomyDeBleu plugin;
     private final Map<UUID, Double> balances;
-    private final double startingBalance;
-    private final String currencySingular;
-    private final String currencyPlural;
+    private String currencySingular;
+    private String currencyPlural;
 
-    public EconomyDeBleuEconomy(EconomyDeBleu plugin, FileConfiguration dataConfig, double startingBalance, String currencySingular, String currencyPlural) {
+    private DecimalFormat formatter;
+
+    public EconomyDeBleuEconomy(EconomyDeBleu plugin,  String currencySingular, String currencyPlural) {
         this.plugin = plugin;
         this.balances = new HashMap<>();
-        this.startingBalance = startingBalance;
         this.currencySingular = currencySingular;
         this.currencyPlural = currencyPlural;
 
-        if (dataConfig != null) {
-            for (String uuidString : dataConfig.getKeys(false)) {
-                try {
-                    UUID uuid = UUID.fromString(uuidString);
-                    double balance = dataConfig.getDouble(uuidString);
-                    balances.put(uuid, balance);
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("balances.yml에서 유효하지 않은 UUID를 발견했습니다: " + uuidString);
-                }
-            }
-            plugin.getLogger().info("balances.yml에서 " + balances.size() + "개의 플레이어 잔액을 로드했습니다.");
-        }
+        this.formatter = new DecimalFormat("#,##0.##");
+    }
+
+    public void setcurrencyUnits(String singular, String plural) {
+        this.currencySingular = singular;
+        this.currencyPlural = plural;
     }
 
     public Map<UUID, Double> getBalances() {
         return balances;
+    }
+
+    public void setBalance(UUID uuid, double amount) {
+        balances.put(uuid, amount);
     }
 
     @Override
@@ -62,7 +61,15 @@ public class EconomyDeBleuEconomy extends AbstractEconomy {
 
     @Override
     public String format(double amount) {
-        return String.format("%.2f", amount) + " " + (amount == 1.0 ? currencyNameSingular() : currencyNamePlural());
+        // DecimalFormat을 사용하여 숫자 형식화
+        String formattedAmount = formatter.format(amount);
+
+        // amount의 값에 따라 단수/복수 단위 사용
+        if (amount == 1.0) { // 정확히 1.0일 때만 단수
+            return formattedAmount + currencySingular;
+        } else {
+            return formattedAmount + currencyPlural;
+        }
     }
 
     @Override
@@ -215,7 +222,6 @@ public class EconomyDeBleuEconomy extends AbstractEconomy {
         return Collections.emptyList();
     }
 
-    // --- 계정 생성/존재 확인 ---
     @Override
     public boolean createPlayerAccount(String playerName) {
         return createPlayerAccount(Bukkit.getOfflinePlayer(playerName));
@@ -226,7 +232,7 @@ public class EconomyDeBleuEconomy extends AbstractEconomy {
         if (hasAccount(player)) {
             return false;
         }
-        balances.put(player.getUniqueId(), startingBalance);
+        balances.put(player.getUniqueId(), 0.0);
         plugin.savePlayerData();
         return true;
     }
