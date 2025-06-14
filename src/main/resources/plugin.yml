@@ -1,0 +1,21 @@
+name: EconomyDeBleu
+version: '1.0-SNAPSHOT'
+main: dev.o8o1o5.economyDeBleu.EconomyDeBleu
+api-version: '1.21'
+authors: [ o8o1o5 ]
+description: Nickname change plugin
+softdepend: [Vault]
+
+commands:
+  balance:
+    description: 당신의 잔액을 확인합니다.
+    usage: /balance
+  eco:
+    description: 관리자용 경제 관리 명령어입니다.
+    usage: /eco <set|give|take> <player> <amount>
+    permission: economydebleu.admin
+    permission-message: "&c권한이 없습니다!"
+  permissions:
+    economydebleu.admin:
+      description: EconomyDeBleu 관리자 명령어 사용 권한.
+      default: op
